@@ -457,7 +457,7 @@ public class VaultPackage {
         JobStatusResponse jobStatusResponse;
         int ctr = 0;
         do {
-            if (ctr < 1) {
+            if (ctr < 10) {
                 logger.info("Waiting 15 seconds to retry checking the status of the job");
                 TimeUnit.SECONDS.sleep(15);
             }

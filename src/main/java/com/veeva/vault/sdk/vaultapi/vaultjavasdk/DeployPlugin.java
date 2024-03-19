@@ -14,38 +14,45 @@ import java.io.IOException;
  * Goal that validates, imports, and deploys the package that was created to the specified Vault in the Vapil Settings file.
  */
 
-@Mojo( name = "deploy", requiresProject = false)
+@Mojo(name = "deploy", requiresProject = false)
 public class DeployPlugin extends BasePlugin {
 
-	private static final Logger logger = Logger.getLogger(DeployPlugin.class);
+    private static final Logger logger = Logger.getLogger(DeployPlugin.class);
 
-	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
-		super.execute();
-		try {
-			if (vaultClient.validateSession()) {
-				//Validates, uploads, and then deploys the defined VPK to the specified vault.
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        initAllClients();
+        super.execute();
 
-				if (PACKAGE_PATH != null) {
-					PackageDeploymentResultsResponse response = VaultPackage.deployPackage(vaultClient, PACKAGE_PATH);
+        vaultClients.forEach((s, builder) -> {
+            vaultClient = builder.build();
+            logger.info("############################################################################################################################################");
+            logger.info("Deploying to :" + vaultClient.getVaultDNS());
+            logger.info("############################################################################################################################################");
+            try {
+                if (vaultClient.validateSession()) {
+                    //Validates, uploads, and then deploys the defined VPK to the specified vault.
 
-					if (response != null && response.isSuccessful()) {
-						String packageStatus = response.getResponseDetails().getPackageStatus();
-						if (packageStatus.equals("blocked__v") || packageStatus.equals("deployed_with_errors__v") ||
-								packageStatus.equals("error__v") || packageStatus.equals("deployed_with_failures__v")) {
-							logger.info("The VPK has imported successfully but has a BLOCKED status. The logs have been downloaded to the deployment/logs/ directory.");
-							String deploymentLogUrl = response.getResponseDetails().getDeploymentLog().get(1).getUrl();
+                    if (PACKAGE_PATH != null) {
+                        PackageDeploymentResultsResponse response = VaultPackage.deployPackage(vaultClient, PACKAGE_PATH);
 
-							ErrorHandler.retrieveDeploymentLogs(vaultClient, deploymentLogUrl);
-						}
-					}
-				}
-				else {
-					logger.error("Cannot deploy package. There is no VPK in '<PROJECT_DIRECTORY>/deployment/packages/'.");
-				}
-			}
-		} catch (InterruptedException | IOException e) {
-			logger.error("An error has occurred. " + e.getMessage());
-		}
-	}
+                        if (response != null && response.isSuccessful()) {
+                            String packageStatus = response.getResponseDetails().getPackageStatus();
+                            if (packageStatus.equals("blocked__v") || packageStatus.equals("deployed_with_errors__v") ||
+                                    packageStatus.equals("error__v") || packageStatus.equals("deployed_with_failures__v")) {
+                                logger.info("The VPK has imported successfully but has a BLOCKED status. The logs have been downloaded to the deployment/logs/ directory.");
+                                String deploymentLogUrl = response.getResponseDetails().getDeploymentLog().get(1).getUrl();
+
+                                ErrorHandler.retrieveDeploymentLogs(vaultClient, deploymentLogUrl);
+                            }
+                        }
+                    } else {
+                        logger.error("Cannot deploy package. There is no VPK in '<PROJECT_DIRECTORY>/deployment/packages/'.");
+                    }
+                }
+            } catch (InterruptedException | IOException e) {
+                logger.error("An error has occurred. " + e.getMessage());
+            }
+        });
+    }
 }
