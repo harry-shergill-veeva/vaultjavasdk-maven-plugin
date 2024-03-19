@@ -8,7 +8,7 @@ This Maven plugin provides a set of easy-to-use commands that allow you to packa
 ## Configuration
 
 To make the Maven plugin available in a Vault Java SDK project, you must have a [Vapil settings file](https://github.com/veeva/vault-api-library) and create a separate JSON file with the following attributes:
-
+**Note : Passing multiple VaultDNS seperated by comms will let you import and deploy to multiple vaults provided the credentials you use are same for all of them **
 ```
 {
   "deployment_option": "replace_all", 
